@@ -1,0 +1,181 @@
+// API service for communicating with Gego backend
+const API_BASE_URL = 'http://localhost:8989/api/v1'
+
+export interface APIResponse<T = any> {
+  success: boolean
+  data?: T
+  error?: string
+  message?: string
+}
+
+export interface PaginatedResponse<T = any> {
+  data: T[]
+  pagination: {
+    page: number
+    limit: number
+    total: number
+    total_pages: number
+  }
+}
+
+export interface LLMResponse {
+  id: string
+  name: string
+  provider: string
+  model: string
+  api_key?: string
+  base_url?: string
+  config?: Record<string, string>
+  enabled: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface PromptResponse {
+  id: string
+  template: string
+  tags?: string[]
+  enabled: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface ScheduleResponse {
+  id: string
+  name: string
+  prompt_ids: string[]
+  llm_ids: string[]
+  cron_expr: string
+  temperature: number
+  enabled: boolean
+  last_run?: string
+  next_run?: string
+  created_at: string
+  updated_at: string
+}
+
+export interface KeywordCount {
+  keyword: string
+  count: number
+}
+
+export interface TimeSeriesPoint {
+  timestamp: string
+  count: number
+}
+
+export interface PromptStats {
+  prompt_id: string
+  total_responses: number
+  unique_llms: number
+  llm_counts: Record<string, number>
+  avg_tokens: number
+  updated_at: string
+}
+
+export interface LLMStats {
+  llm_id: string
+  total_responses: number
+  unique_prompts: number
+  prompt_counts: Record<string, number>
+  avg_tokens: number
+  updated_at: string
+}
+
+export interface StatsResponse {
+  total_responses: number
+  total_prompts: number
+  total_llms: number
+  total_schedules: number
+  top_keywords: KeywordCount[]
+  prompt_stats: PromptStats[]
+  llm_stats: LLMStats[]
+  response_trends: TimeSeriesPoint[]
+  last_updated: string
+}
+
+export interface SearchRequest {
+  keyword: string
+  start_time?: string
+  end_time?: string
+  limit?: number
+}
+
+export interface SearchResponse {
+  keyword: string
+  total_mentions: number
+  unique_prompts: number
+  unique_llms: number
+  by_prompt: Record<string, number>
+  by_llm: Record<string, number>
+  by_provider: Record<string, number>
+  first_seen: string
+  last_seen: string
+  responses?: any[]
+}
+
+class ApiService {
+  private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+    const url = `${API_BASE_URL}${endpoint}`
+    const response = await fetch(url, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...options.headers,
+      },
+      ...options,
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}))
+      throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`)
+    }
+
+    const data = await response.json()
+    return data
+  }
+
+  // Health check
+  async healthCheck(): Promise<APIResponse> {
+    return this.request<APIResponse>('/health')
+  }
+
+  // LLM endpoints
+  async getLLMs(): Promise<LLMResponse[]> {
+    const response = await this.request<APIResponse<LLMResponse[]>>('/llms')
+    return response.data || []
+  }
+
+  async getLLM(id: string): Promise<LLMResponse> {
+    const response = await this.request<APIResponse<LLMResponse>>(`/llms/${id}`)
+    return response.data!
+  }
+
+  // Prompt endpoints
+  async getPrompts(): Promise<PromptResponse[]> {
+    const response = await this.request<PaginatedResponse<PromptResponse>>('/prompts')
+    return response.data || []
+  }
+
+  async getPrompt(id: string): Promise<PromptResponse> {
+    const response = await this.request<APIResponse<PromptResponse>>(`/prompts/${id}`)
+    return response.data!
+  }
+
+  // Stats endpoint
+  async getStats(keywordLimit?: number): Promise<StatsResponse> {
+    const params = keywordLimit ? `?keyword_limit=${keywordLimit}` : ''
+    const response = await this.request<APIResponse<StatsResponse>>(`/stats${params}`)
+    return response.data!
+  }
+
+  // Search endpoint
+  async searchKeyword(request: SearchRequest): Promise<SearchResponse> {
+    const response = await this.request<APIResponse<SearchResponse>>('/search', {
+      method: 'POST',
+      body: JSON.stringify(request),
+    })
+    return response.data!
+  }
+}
+
+export const apiService = new ApiService()
