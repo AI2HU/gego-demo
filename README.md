@@ -18,6 +18,23 @@ A Vue.js 3 demonstration of Gego's GEO (Generative Engine Optimization) analytic
 2. **Node.js**: Version 20.19.0 or higher
 3. **Data**: The Gego backend should have some prompts, LLMs, and response data
 
+## Configuration
+
+### Environment Variables
+
+The demo uses environment variables to configure the API connection. Create a `.env` file in the project root:
+
+```bash
+# API Configuration
+VITE_API_BASE_URL=http://localhost:8989/api/v1
+```
+
+**Note**: In Vite, environment variables must be prefixed with `VITE_` to be accessible in the browser.
+
+### Default Configuration
+
+If no environment variable is set, the demo defaults to `http://localhost:8989/api/v1`.
+
 ## Quick Start
 
 1. **Start the Gego API server**:
