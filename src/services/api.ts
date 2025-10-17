@@ -117,21 +117,45 @@ export interface SearchResponse {
 class ApiService {
   private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     const url = `${API_BASE_URL}${endpoint}`
-    const response = await fetch(url, {
-      headers: {
-        'Content-Type': 'application/json',
-        ...options.headers,
-      },
-      ...options,
-    })
+    
+    try {
+      const response = await fetch(url, {
+        headers: {
+          'Content-Type': 'application/json',
+          ...options.headers,
+        },
+        ...options,
+      })
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}))
-      throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`)
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`)
+      }
+
+      const data = await response.json()
+      return data
+    } catch (error) {
+      // Handle network errors and provide more descriptive messages
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        throw new Error('Failed to fetch - Unable to connect to the API server. Please check if the server is running.')
+      }
+      
+      if (error instanceof Error) {
+        // Re-throw with more context for common network issues
+        if (error.message.includes('ECONNREFUSED')) {
+          throw new Error('Connection refused - The API server is not running or not accessible on the expected port.')
+        }
+        if (error.message.includes('ENOTFOUND')) {
+          throw new Error('Host not found - Unable to resolve the API server address.')
+        }
+        if (error.message.includes('timeout')) {
+          throw new Error('Request timeout - The API server is taking too long to respond.')
+        }
+      }
+      
+      // Re-throw the original error if it's already an Error instance
+      throw error
     }
-
-    const data = await response.json()
-    return data
   }
 
   // Health check
