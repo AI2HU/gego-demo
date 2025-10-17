@@ -14,7 +14,9 @@
     "type-check": "vue-tsc --build",
     "lint:oxlint": "oxlint . --fix -D correctness --ignore-path .gitignore",
     "lint:eslint": "eslint . --fix",
-    "lint": "run-s lint:*"
+    "lint": "run-s lint:*",
+    "build:gh-pages": "NODE_ENV=production vite build",
+    "preview:gh-pages": "NODE_ENV=production vite preview"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.14",
