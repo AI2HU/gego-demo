@@ -101,6 +101,19 @@ export interface SearchRequest {
   limit?: number
 }
 
+export interface ResponseItem {
+  id: string
+  prompt_id: string
+  prompt_text: string
+  llm_id: string
+  llm_name: string
+  llm_provider: string
+  llm_model?: string
+  response_text: string
+  temperature?: number
+  created_at: string
+}
+
 export interface SearchResponse {
   keyword: string
   total_mentions: number
@@ -111,7 +124,7 @@ export interface SearchResponse {
   by_provider: Record<string, number>
   first_seen: string
   last_seen: string
-  responses?: any[]
+  responses?: ResponseItem[]
 }
 
 class ApiService {

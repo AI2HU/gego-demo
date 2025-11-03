@@ -192,6 +192,28 @@
                 <span class="font-medium">Search</span>
               </button>
             </div>
+            
+            <!-- Trending Keywords -->
+            <div v-if="stats?.top_keywords && stats.top_keywords.length > 0" class="mt-4">
+              <div class="flex items-center mb-2">
+                <svg class="w-4 h-4 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                </svg>
+                <span class="text-xs font-semibold text-gray-600 uppercase tracking-wide">Trending Keywords</span>
+              </div>
+              <div class="flex flex-wrap gap-2">
+                <button
+                  v-for="keyword in stats.top_keywords.slice(0, 10)"
+                  :key="keyword.keyword"
+                  @click="searchWithKeyword(keyword.keyword)"
+                  class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-gray-700 hover:text-gray-900 rounded-lg text-sm font-medium transition-all duration-200 flex items-center space-x-1.5 border border-transparent hover:border-slate-300 shadow-sm hover:shadow"
+                  :class="{ 'bg-slate-200 border-slate-300': searchKeyword === keyword.keyword }"
+                >
+                  <span>{{ keyword.keyword }}</span>
+                  <span class="text-xs text-gray-500">({{ keyword.count }})</span>
+                </button>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -260,6 +282,75 @@
                 </div>
               </div>
             </div>
+
+            <!-- Responses List -->
+            <div v-if="searchResults.responses && searchResults.responses.length > 0" class="mt-6">
+              <h4 class="font-semibold text-gray-800 mb-4 flex items-center">
+                <svg class="w-5 h-5 mr-2 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+                Responses ({{ searchResults.responses.length }})
+              </h4>
+              <div class="space-y-4">
+                <div v-for="(response, index) in searchResults.responses" :key="response.id || index" class="bg-slate-50 rounded-lg p-4 border border-gray-200/50 hover:bg-slate-100 transition-colors duration-200">
+                  <!-- Header with Model and Temperature -->
+                  <div class="flex items-start justify-between mb-3 pb-3 border-b border-gray-200/50">
+                    <div class="flex-1">
+                      <div class="flex items-center space-x-3 mb-2">
+                        <div class="px-3 py-1 bg-white rounded-lg border border-gray-200/50">
+                          <span class="text-sm font-semibold text-gray-700 capitalize">{{ response.llm_provider }}</span>
+                        </div>
+                        <div class="px-3 py-1 bg-white rounded-lg border border-gray-200/50">
+                          <span class="text-sm font-medium text-gray-700">{{ response.llm_model || response.llm_name || 'Unknown Model' }}</span>
+                        </div>
+                        <div v-if="response.temperature !== undefined" class="px-3 py-1 bg-white rounded-lg border border-gray-200/50">
+                          <span class="text-sm text-gray-600">Temperature: </span>
+                          <span class="text-sm font-semibold text-gray-800">{{ response.temperature.toFixed(2) }}</span>
+                        </div>
+                        <div class="px-3 py-1 bg-white rounded-lg border border-gray-200/50">
+                          <span class="text-xs text-gray-500">{{ formatDate(response.created_at) }}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Prompt -->
+                  <div class="mb-3">
+                    <div class="flex items-center mb-2">
+                      <svg class="w-4 h-4 mr-2 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                      </svg>
+                      <span class="text-xs font-semibold text-gray-600 uppercase tracking-wide">Prompt</span>
+                    </div>
+                    <div class="p-3 bg-white rounded-lg border border-gray-200/50">
+                      <p class="text-sm text-gray-700 leading-relaxed">{{ response.prompt_text }}</p>
+                    </div>
+                  </div>
+
+                  <!-- Response with Highlighted Keyword -->
+                  <div>
+                    <div class="flex items-center mb-2">
+                      <svg class="w-4 h-4 mr-2 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path>
+                      </svg>
+                      <span class="text-xs font-semibold text-gray-600 uppercase tracking-wide">Response</span>
+                    </div>
+                    <div class="p-3 bg-white rounded-lg border border-gray-200/50">
+                      <p class="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap" v-html="highlightKeyword(response.response_text, searchResults.keyword)"></p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div v-else-if="searchResults && searchResults.responses !== undefined && searchResults.responses.length === 0" class="mt-6 text-center py-8 bg-slate-50 rounded-lg border border-gray-200/50">
+              <div class="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center mx-auto mb-3">
+                <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+              </div>
+              <p class="font-medium text-gray-600">No responses found</p>
+              <p class="text-sm text-gray-500 mt-1">The keyword "{{ searchResults.keyword }}" was not found in any responses</p>
+            </div>
           </div>
         </div>
 
@@ -312,103 +403,62 @@
             </div>
           </div>
 
-          <!-- Response Trends Chart -->
+          <!-- Provider Distribution -->
           <div class="bg-white/80 backdrop-blur-sm rounded-lg shadow-sm border border-gray-200/50">
             <div class="px-6 py-4 border-b border-gray-200/50">
               <div class="flex items-center space-x-3">
                 <div class="w-8 h-8 bg-slate-100 rounded-lg flex items-center justify-center">
                   <svg class="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
                   </svg>
                 </div>
                 <div>
-                  <h3 class="text-lg font-semibold text-gray-800">Response Trends</h3>
-                  <p class="text-sm text-gray-600">Daily response count over the last 30 days</p>
+                  <h3 class="text-lg font-semibold text-gray-800">Provider Distribution</h3>
+                  <p class="text-sm text-gray-600">Response distribution across LLM providers</p>
                 </div>
               </div>
             </div>
             <div class="p-6">
-              <div v-if="stats?.response_trends?.length > 0" class="h-64">
-                <canvas ref="trendsChart"></canvas>
+              <div v-if="stats?.llm_stats && stats.llm_stats.length > 0" class="space-y-4">
+                <div v-for="llmStat in getProviderDistribution()" :key="llmStat.provider" class="bg-slate-50 rounded-lg p-4 border border-gray-200/50 hover:bg-slate-100 transition-colors duration-200">
+                  <div class="flex items-center justify-between mb-3">
+                    <div class="flex items-center space-x-3">
+                      <div class="w-10 h-10 bg-slate-200 rounded-lg flex items-center justify-center">
+                        <svg class="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                        </svg>
+                      </div>
+                      <div>
+                        <h4 class="font-semibold text-gray-800 capitalize">{{ llmStat.provider }}</h4>
+                        <p class="text-xs text-gray-500">{{ llmStat.modelCount }} model{{ llmStat.modelCount !== 1 ? 's' : '' }}</p>
+                      </div>
+                    </div>
+                    <div class="text-right">
+                      <div class="text-2xl font-semibold text-slate-700">{{ llmStat.totalResponses.toLocaleString() }}</div>
+                      <div class="text-xs text-gray-500">responses</div>
+                    </div>
+                  </div>
+                  <div class="w-full bg-gray-200 rounded-full h-3 mb-2">
+                    <div 
+                      class="bg-slate-500 h-3 rounded-full transition-all duration-500" 
+                      :style="{ width: `${llmStat.percentage}%` }"
+                    ></div>
+                  </div>
+                  <div class="flex justify-between items-center text-xs text-gray-600">
+                    <span>{{ llmStat.percentage.toFixed(1) }}% of total</span>
+                    <span>Avg {{ Math.round(llmStat.avgTokens) }} tokens</span>
+                  </div>
+                </div>
               </div>
               <div v-else class="text-center text-gray-500 py-8">
                 <div class="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center mx-auto mb-3">
                   <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
                   </svg>
                 </div>
-                <p class="font-medium">No trend data available</p>
-                <p class="text-sm">Response data will appear here over time</p>
+                <p class="font-medium">No provider data available</p>
+                <p class="text-sm">Run some prompts to see provider distribution</p>
               </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- LLM Performance Section -->
-        <div class="bg-white/80 backdrop-blur-sm rounded-lg shadow-sm border border-gray-200/50 mb-8">
-          <div class="px-6 py-4 border-b border-gray-200/50">
-            <div class="flex items-center space-x-3">
-              <div class="w-8 h-8 bg-slate-100 rounded-lg flex items-center justify-center">
-                <svg class="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
-                </svg>
-              </div>
-              <div>
-                <h3 class="text-lg font-semibold text-gray-800">LLM Performance</h3>
-                <p class="text-sm text-gray-600">Response statistics by LLM provider</p>
-              </div>
-            </div>
-          </div>
-          <div class="p-6">
-            <div v-if="stats?.llm_stats?.length > 0" class="overflow-x-auto">
-              <table class="min-w-full">
-                <thead>
-                  <tr class="border-b border-gray-200/50">
-                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">LLM Provider</th>
-                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Responses</th>
-                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Unique Prompts</th>
-                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Avg Tokens</th>
-                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Last Updated</th>
-                  </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-200/50">
-                  <tr v-for="llmStat in stats?.llm_stats || []" :key="llmStat.llm_id" class="hover:bg-slate-50 transition-colors duration-200">
-                    <td class="px-4 py-3 whitespace-nowrap">
-                      <div class="flex items-center">
-                        <div class="w-6 h-6 bg-slate-200 rounded flex items-center justify-center mr-3">
-                          <svg class="w-3 h-3 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
-                          </svg>
-                        </div>
-                        <div>
-                          <div class="text-sm font-medium text-gray-800">{{ getLLMName(llmStat.llm_id) }}</div>
-                        </div>
-                      </div>
-                    </td>
-                    <td class="px-4 py-3 whitespace-nowrap">
-                      <span class="text-sm font-semibold text-gray-800">{{ llmStat.total_responses.toLocaleString() }}</span>
-                    </td>
-                    <td class="px-4 py-3 whitespace-nowrap">
-                      <span class="text-sm text-gray-700">{{ llmStat.unique_prompts }}</span>
-                    </td>
-                    <td class="px-4 py-3 whitespace-nowrap">
-                      <span class="text-sm text-gray-700">{{ Math.round(llmStat.avg_tokens) }}</span>
-                    </td>
-                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
-                      {{ formatDate(llmStat.updated_at) }}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-            <div v-else class="text-center text-gray-500 py-8">
-              <div class="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center mx-auto mb-3">
-                <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
-                </svg>
-              </div>
-              <p class="font-medium">No LLM performance data available</p>
-              <p class="text-sm">Connect LLM providers to see performance metrics</p>
             </div>
           </div>
         </div>
@@ -532,8 +582,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, nextTick } from 'vue'
-import { apiService, type StatsResponse, type SearchResponse, type LLMResponse, type PromptResponse } from './services/api'
-import Chart from 'chart.js/auto'
+import { apiService, type StatsResponse, type SearchResponse, type ResponseItem, type LLMResponse, type PromptResponse } from './services/api'
 
 // Reactive data
 const loading = ref(true)
@@ -548,8 +597,6 @@ const searchKeyword = ref('')
 const searchLoading = ref(false)
 const searchResults = ref<SearchResponse | null>(null)
 
-// Chart reference
-const trendsChart = ref<HTMLCanvasElement | null>(null)
 
 // Methods
 const checkConnection = async () => {
@@ -579,10 +626,6 @@ const loadData = async () => {
     llms.value = llmsData
     prompts.value = promptsData
     
-    // Render chart after data is loaded
-    await nextTick()
-    renderTrendsChart()
-    
   } catch (err) {
     error.value = err instanceof Error ? err.message : 'Failed to load data'
   } finally {
@@ -604,7 +647,7 @@ const performSearch = async () => {
     searchLoading.value = true
     const results = await apiService.searchKeyword({
       keyword: searchKeyword.value.trim(),
-      limit: 100
+      limit: 50
     })
     searchResults.value = results
   } catch (err) {
@@ -614,98 +657,56 @@ const performSearch = async () => {
   }
 }
 
-const renderTrendsChart = () => {
-  if (!trendsChart.value || !stats.value?.response_trends.length) return
-  
-  const ctx = trendsChart.value.getContext('2d')
-  if (!ctx) return
-  
-  new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: stats.value.response_trends.map(point => 
-        new Date(point.timestamp).toLocaleDateString()
-      ),
-      datasets: [{
-        label: 'Responses',
-        data: stats.value.response_trends.map(point => point.count),
-        borderColor: 'rgb(100, 116, 139)',
-        backgroundColor: 'rgba(100, 116, 139, 0.1)',
-        borderWidth: 2,
-        pointBackgroundColor: 'rgb(100, 116, 139)',
-        pointBorderColor: '#ffffff',
-        pointBorderWidth: 2,
-        pointRadius: 4,
-        pointHoverRadius: 6,
-        tension: 0.4,
-        fill: true
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: {
-          display: false
-        },
-        tooltip: {
-          backgroundColor: 'rgba(255, 255, 255, 0.95)',
-          titleColor: '#374151',
-          bodyColor: '#6b7280',
-          borderColor: '#e5e7eb',
-          borderWidth: 1,
-          cornerRadius: 8,
-          displayColors: false,
-          titleFont: {
-            size: 13,
-            weight: 'normal'
-          },
-          bodyFont: {
-            size: 12
-          },
-          padding: 8
-        }
-      },
-      scales: {
-        x: {
-          grid: {
-            display: false
-          },
-          ticks: {
-            color: '#6b7280',
-            font: {
-              size: 11,
-              weight: 'normal'
-            }
-          }
-        },
-        y: {
-          beginAtZero: true,
-          grid: {
-            color: 'rgba(229, 231, 235, 0.5)'
-          },
-          ticks: {
-            precision: 0,
-            color: '#6b7280',
-            font: {
-              size: 11,
-              weight: 'normal'
-            }
-          }
-        }
-      },
-      elements: {
-        point: {
-          hoverBackgroundColor: 'rgb(100, 116, 139)'
-        }
-      }
-    }
-  })
+const searchWithKeyword = (keyword: string) => {
+  searchKeyword.value = keyword
+  performSearch()
 }
 
 const getLLMName = (llmId: string): string => {
   const llm = llms.value.find(l => l.id === llmId)
   return llm ? `${llm.name} (${llm.provider})` : llmId
+}
+
+const getProviderDistribution = () => {
+  if (!stats.value?.llm_stats || stats.value.llm_stats.length === 0) {
+    return []
+  }
+
+  const providerMap = new Map<string, { provider: string; totalResponses: number; totalTokens: number; modelCount: number; models: Set<string> }>()
+  const totalResponses = stats.value.llm_stats.reduce((sum, stat) => sum + stat.total_responses, 0)
+
+  stats.value.llm_stats.forEach(stat => {
+    const llm = llms.value.find(l => l.id === stat.llm_id)
+    const provider = llm?.provider || 'unknown'
+    
+    if (!providerMap.has(provider)) {
+      providerMap.set(provider, {
+        provider,
+        totalResponses: 0,
+        totalTokens: 0,
+        modelCount: 0,
+        models: new Set()
+      })
+    }
+    
+    const providerStat = providerMap.get(provider)!
+    providerStat.totalResponses += stat.total_responses
+    providerStat.totalTokens += stat.avg_tokens * stat.total_responses
+    if (llm?.model) {
+      providerStat.models.add(llm.model)
+    }
+    providerStat.modelCount = providerStat.models.size
+  })
+
+  return Array.from(providerMap.values())
+    .map(stat => ({
+      provider: stat.provider,
+      totalResponses: stat.totalResponses,
+      avgTokens: stat.totalResponses > 0 ? stat.totalTokens / stat.totalResponses : 0,
+      modelCount: stat.modelCount,
+      percentage: totalResponses > 0 ? (stat.totalResponses / totalResponses) * 100 : 0
+    }))
+    .sort((a, b) => b.totalResponses - a.totalResponses)
 }
 
 const getPromptTemplate = (promptId: string): string => {
@@ -715,6 +716,13 @@ const getPromptTemplate = (promptId: string): string => {
 
 const formatDate = (dateString: string): string => {
   return new Date(dateString).toLocaleDateString()
+}
+
+const highlightKeyword = (text: string, keyword: string): string => {
+  if (!keyword || !text) return text
+  
+  const regex = new RegExp(`(${keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi')
+  return text.replace(regex, '<mark class="bg-yellow-200 text-gray-900 font-semibold px-1 rounded">$1</mark>')
 }
 
 const getErrorMessage = (): string => {
@@ -748,6 +756,7 @@ const getErrorMessage = (): string => {
   // Default message for other errors
   return error.value
 }
+
 
 // Lifecycle
 onMounted(async () => {
