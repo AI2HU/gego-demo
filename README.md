@@ -1,4 +1,4 @@
-# Gego Demo - GEO Analytics Dashboard
+# Gego Analytics - GEO Analytics Dashboard
 
 A Vue.js 3 demonstration of Gego's GEO (Generative Engine Optimization) analytics capabilities. This single-page application showcases how Gego tracks brand mentions and keyword visibility across multiple Large Language Models (LLMs).
 
