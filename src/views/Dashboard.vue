@@ -814,6 +814,7 @@ import {
   LinearScale,
   ArcElement
 } from 'chart.js'
+import type { ChartOptions } from 'chart.js'
 import {
   apiService,
   type StatsResponse,
@@ -1035,7 +1036,7 @@ const providerChartData = computed(() => {
   }
 })
 
-const providerChartOptions = {
+const providerChartOptions: ChartOptions<'doughnut'> = {
   responsive: true,
   maintainAspectRatio: false,
   plugins: {
