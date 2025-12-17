@@ -385,6 +385,13 @@
               </div>
             </div>
             <div class="p-6">
+              <div v-if="stats?.top_keywords?.length" class="mb-6 h-64">
+                <Bar
+                  :data="topKeywordsChartData"
+                  :options="topKeywordsChartOptions"
+                  aria-label="Top keyword mentions across all LLM responses"
+                />
+              </div>
               <div v-if="stats?.top_keywords?.length > 0" class="space-y-3">
                 <div v-for="(keyword, index) in stats?.top_keywords?.slice(0, 10) || []" :key="keyword.keyword" class="flex items-center p-3 bg-slate-50 rounded-lg border border-gray-200/50 hover:bg-slate-100 transition-colors duration-200">
                   <div class="w-8 h-8 bg-slate-200 rounded-lg flex items-center justify-center text-sm font-semibold text-slate-700 mr-3">
@@ -428,6 +435,13 @@
               </div>
             </div>
             <div class="p-6">
+              <div v-if="stats?.llm_stats && stats.llm_stats.length" class="mb-6 h-64">
+                <Doughnut
+                  :data="providerChartData"
+                  :options="providerChartOptions"
+                  aria-label="Response distribution by LLM provider"
+                />
+              </div>
               <div v-if="stats?.llm_stats && stats.llm_stats.length > 0" class="space-y-4">
                 <div v-for="llmStat in getProviderDistribution()" :key="llmStat.provider" class="bg-slate-50 rounded-lg p-4 border border-gray-200/50 hover:bg-slate-100 transition-colors duration-200">
                   <div class="flex items-center justify-between mb-3">
@@ -463,6 +477,219 @@
                 </div>
                 <p class="font-medium">No provider data available</p>
                 <p class="text-sm">Run some prompts to see provider distribution</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- URL Analytics Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 mb-6 md:mb-8">
+          <div class="bg-white/80 backdrop-blur-sm rounded-lg shadow-sm border border-gray-200/50">
+            <div class="px-6 py-4 border-b border-gray-200/50">
+              <div class="flex items-center space-x-3">
+                <div class="w-8 h-8 bg-slate-100 rounded-lg flex items-center justify-center">
+                  <i class="pi pi-link text-slate-600 text-base"></i>
+                </div>
+                <div>
+                  <h3 class="text-lg font-semibold text-gray-800">Top URLs</h3>
+                  <p class="text-sm text-gray-600">Most frequently cited URLs across all responses</p>
+                </div>
+              </div>
+            </div>
+            <div class="p-6">
+              <div v-if="urlStats?.top_urls && urlStats.top_urls.length > 0" class="space-y-3">
+                <div
+                  v-for="item in urlStats.top_urls.slice(0, 10)"
+                  :key="item.url"
+                  class="flex items-start justify-between p-3 bg-slate-50 rounded-lg border border-gray-200/50 hover:bg-slate-100 transition-colors duration-200"
+                >
+                  <div class="flex-1 pr-3">
+                    <a
+                      :href="item.url"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="text-sm font-medium text-slate-700 hover:text-slate-900 break-all"
+                    >
+                      {{ truncate(item.title || item.url, 80) }}
+                    </a>
+                    <p v-if="item.search_query" class="mt-1 text-xs text-gray-500">
+                      Search: "{{ truncate(item.search_query, 60) }}"
+                    </p>
+                  </div>
+                  <div class="text-right flex-shrink-0">
+                    <div class="text-lg font-semibold text-slate-700">{{ item.citations }}</div>
+                    <div class="text-xs text-gray-500">citations</div>
+                  </div>
+                </div>
+              </div>
+              <div v-else class="text-center text-gray-500 py-8">
+                <div class="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center mx-auto mb-3">
+                  <i class="pi pi-link text-gray-400 text-2xl"></i>
+                </div>
+                <p class="font-medium">No URL data available</p>
+                <p class="text-sm">Run some prompts with search enabled to see URL analytics</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-white/80 backdrop-blur-sm rounded-lg shadow-sm border border-gray-200/50">
+            <div class="px-6 py-4 border-b border-gray-200/50">
+              <div class="flex items-center space-x-3">
+                <div class="w-8 h-8 bg-slate-100 rounded-lg flex items-center justify-center">
+                  <i class="pi pi-globe text-slate-600 text-base"></i>
+                </div>
+                <div>
+                  <h3 class="text-lg font-semibold text-gray-800">Top Domains</h3>
+                  <p class="text-sm text-gray-600">Domains most often cited in responses</p>
+                </div>
+              </div>
+            </div>
+            <div class="p-6">
+              <div v-if="urlStats?.top_domains && urlStats.top_domains.length" class="mb-6 h-64">
+                <Bar
+                  :data="domainChartData"
+                  :options="topKeywordsChartOptions"
+                  aria-label="Top cited domains across responses"
+                />
+              </div>
+              <div v-if="urlStats?.top_domains && urlStats.top_domains.length > 0" class="space-y-3">
+                <div
+                  v-for="domain in urlStats.top_domains.slice(0, 10)"
+                  :key="domain.domain"
+                  class="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-gray-200/50 hover:bg-slate-100 transition-colors duration-200"
+                >
+                  <div>
+                    <div class="text-sm font-medium text-gray-800 break-all">{{ domain.domain }}</div>
+                    <div class="text-xs text-gray-500">
+                      {{ domain.unique_url_count }} unique URL{{ domain.unique_url_count !== 1 ? 's' : '' }}
+                    </div>
+                  </div>
+                  <div class="text-right">
+                    <div class="text-lg font-semibold text-slate-700">{{ domain.citations }}</div>
+                    <div class="text-xs text-gray-500">citations</div>
+                  </div>
+                </div>
+              </div>
+              <div v-else class="text-center text-gray-500 py-8">
+                <div class="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center mx-auto mb-3">
+                  <i class="pi pi-globe text-gray-400 text-2xl"></i>
+                </div>
+                <p class="font-medium">No domain data available</p>
+                <p class="text-sm">Run some prompts with search enabled to see domain analytics</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Query to URL and Keyword-Domain Sections -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 mb-6 md:mb-8">
+          <div class="bg-white/80 backdrop-blur-sm rounded-lg shadow-sm border border-gray-200/50">
+            <div class="px-6 py-4 border-b border-gray-200/50">
+              <div class="flex items-center space-x-3">
+                <div class="w-8 h-8 bg-slate-100 rounded-lg flex items-center justify-center">
+                  <i class="pi pi-search text-slate-600 text-base"></i>
+                </div>
+                <div>
+                  <h3 class="text-lg font-semibold text-gray-800">Query → URL Relationships</h3>
+                  <p class="text-sm text-gray-600">Which URLs are returned for each search query</p>
+                </div>
+              </div>
+            </div>
+            <div class="p-6">
+              <div v-if="queryURLStats && queryURLStats.length > 0" class="space-y-4">
+                <div
+                  v-for="item in queryURLStats.slice(0, 6)"
+                  :key="item.query"
+                  class="bg-slate-50 rounded-lg p-4 border border-gray-200/50"
+                >
+                  <div class="flex items-center justify-between mb-2">
+                    <div class="text-sm font-semibold text-gray-800">
+                      "{{ truncate(item.query, 60) }}"
+                    </div>
+                    <div class="text-xs text-gray-500">
+                      {{ item.total_citations }} total citations
+                    </div>
+                  </div>
+                  <div class="space-y-2 mt-2">
+                    <div
+                      v-for="url in item.urls.slice(0, 3)"
+                      :key="url.url"
+                      class="flex items-start justify-between text-xs"
+                    >
+                      <a
+                        :href="url.url"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="text-slate-700 hover:text-slate-900 break-all pr-2"
+                      >
+                        {{ truncate(url.title || url.url, 60) }}
+                      </a>
+                      <span class="text-gray-500 flex-shrink-0">
+                        {{ url.citations }}×
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div v-else class="text-center text-gray-500 py-8">
+                <div class="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center mx-auto mb-3">
+                  <i class="pi pi-search text-gray-400 text-2xl"></i>
+                </div>
+                <p class="font-medium">No query to URL data available</p>
+                <p class="text-sm">Run prompts that include search queries to see these relationships</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-white/80 backdrop-blur-sm rounded-lg shadow-sm border border-gray-200/50">
+            <div class="px-6 py-4 border-b border-gray-200/50">
+              <div class="flex items-center space-x-3">
+                <div class="w-8 h-8 bg-slate-100 rounded-lg flex items-center justify-center">
+                  <i class="pi pi-sitemap text-slate-600 text-base"></i>
+                </div>
+                <div>
+                  <h3 class="text-lg font-semibold text-gray-800">Keyword → Domain Matrix</h3>
+                  <p class="text-sm text-gray-600">How keywords connect to external domains</p>
+                </div>
+              </div>
+            </div>
+            <div class="p-6">
+              <div v-if="keywordDomainStats && keywordDomainStats.length > 0" class="space-y-4">
+                <div
+                  v-for="item in keywordDomainStats.slice(0, 6)"
+                  :key="item.keyword"
+                  class="bg-slate-50 rounded-lg p-4 border border-gray-200/50"
+                >
+                  <div class="flex items-center justify-between mb-2">
+                    <div class="text-sm font-semibold text-gray-800">
+                      {{ item.keyword }}
+                    </div>
+                    <div class="text-xs text-gray-500">
+                      {{ item.total }} total links
+                    </div>
+                  </div>
+                  <div class="space-y-1 mt-1">
+                    <div
+                      v-for="domain in item.domains.slice(0, 4)"
+                      :key="domain.domain"
+                      class="flex items-center justify-between text-xs"
+                    >
+                      <span class="text-gray-700 break-all pr-2">
+                        {{ domain.domain }}
+                      </span>
+                      <span class="text-gray-500 flex-shrink-0">
+                        {{ domain.count }}×
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div v-else class="text-center text-gray-500 py-8">
+                <div class="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center mx-auto mb-3">
+                  <i class="pi pi-sitemap text-gray-400 text-2xl"></i>
+                </div>
+                <p class="font-medium">No keyword-domain data available</p>
+                <p class="text-sm">Run prompts that generate rich responses with links to see this matrix</p>
               </div>
             </div>
           </div>
@@ -574,9 +801,31 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, nextTick } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
-import { apiService, type StatsResponse, type SearchResponse, type ResponseItem, type LLMResponse, type PromptResponse } from '../services/api'
+import { Bar, Doughnut } from 'vue-chartjs'
+import {
+  Chart as ChartJS,
+  Title,
+  Tooltip,
+  Legend,
+  BarElement,
+  CategoryScale,
+  LinearScale,
+  ArcElement
+} from 'chart.js'
+import {
+  apiService,
+  type StatsResponse,
+  type SearchResponse,
+  type LLMResponse,
+  type PromptResponse,
+  type URLStatsResponse,
+  type QueryURLStats,
+  type KeywordDomainStats
+} from '../services/api'
+
+ChartJS.register(Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale, ArcElement)
 
 const route = useRoute()
 
@@ -588,6 +837,10 @@ const stats = ref<StatsResponse | null>(null)
 const llms = ref<LLMResponse[]>([])
 const prompts = ref<PromptResponse[]>([])
 const mobileMenuOpen = ref(false)
+
+const urlStats = ref<URLStatsResponse | null>(null)
+const queryURLStats = ref<QueryURLStats[] | null>(null)
+const keywordDomainStats = ref<KeywordDomainStats[] | null>(null)
 
 // Search functionality
 const searchKeyword = ref('')
@@ -612,16 +865,21 @@ const loadData = async () => {
     loading.value = true
     error.value = ''
     
-    // Load all data in parallel
-    const [statsData, llmsData, promptsData] = await Promise.all([
+    const [statsData, llmsData, promptsData, urlStatsData, queryURLData, keywordDomainData] = await Promise.all([
       apiService.getStats(20),
       apiService.getLLMs(),
-      apiService.getPrompts()
+      apiService.getPrompts(),
+      apiService.getURLStats(20),
+      apiService.getQueryURLStats(20),
+      apiService.getKeywordDomainMatrix(20, 10)
     ])
     
     stats.value = statsData
     llms.value = llmsData
     prompts.value = promptsData
+    urlStats.value = urlStatsData
+    queryURLStats.value = queryURLData
+    keywordDomainStats.value = keywordDomainData
     
   } catch (err) {
     error.value = err instanceof Error ? err.message : 'Failed to load data'
@@ -706,6 +964,109 @@ const getProviderDistribution = () => {
     .sort((a, b) => b.totalResponses - a.totalResponses)
 }
 
+const topKeywordsChartData = computed(() => {
+  if (!stats.value?.top_keywords?.length) {
+    return { labels: [], datasets: [] }
+  }
+
+  const items = stats.value.top_keywords.slice(0, 10)
+
+  return {
+    labels: items.map(item => item.keyword),
+    datasets: [
+      {
+        data: items.map(item => item.count),
+        backgroundColor: 'rgba(15, 23, 42, 0.7)',
+        borderRadius: 6
+      }
+    ]
+  }
+})
+
+const topKeywordsChartOptions = {
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: {
+    legend: {
+      display: false
+    }
+  },
+  scales: {
+    x: {
+      grid: {
+        display: false
+      },
+      ticks: {
+        color: '#4b5563',
+        maxRotation: 45,
+        minRotation: 45
+      }
+    },
+    y: {
+      grid: {
+        color: '#e5e7eb'
+      },
+      ticks: {
+        color: '#4b5563',
+        precision: 0
+      }
+    }
+  }
+}
+
+const providerChartData = computed(() => {
+  const distribution = getProviderDistribution()
+  if (!distribution.length) {
+    return { labels: [], datasets: [] }
+  }
+
+  const labels = distribution.map(item => item.provider)
+  const data = distribution.map(item => item.totalResponses)
+  const colors = ['#0f172a', '#1f2937', '#4b5563', '#6b7280', '#9ca3af', '#d1d5db']
+
+  return {
+    labels,
+    datasets: [
+      {
+        data,
+        backgroundColor: labels.map((_, index) => colors[index % colors.length])
+      }
+    ]
+  }
+})
+
+const providerChartOptions = {
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: {
+    legend: {
+      position: 'bottom',
+      labels: {
+        color: '#4b5563'
+      }
+    }
+  }
+}
+
+const domainChartData = computed(() => {
+  if (!urlStats.value?.top_domains?.length) {
+    return { labels: [], datasets: [] }
+  }
+
+  const items = urlStats.value.top_domains.slice(0, 10)
+
+  return {
+    labels: items.map(item => item.domain),
+    datasets: [
+      {
+        data: items.map(item => item.citations),
+        backgroundColor: 'rgba(37, 99, 235, 0.7)',
+        borderRadius: 6
+      }
+    ]
+  }
+})
+
 const getPromptTemplate = (promptId: string): string => {
   const prompt = prompts.value.find(p => p.id === promptId)
   return prompt ? prompt.template.substring(0, 100) + (prompt.template.length > 100 ? '...' : '') : promptId
@@ -720,6 +1081,11 @@ const highlightKeyword = (text: string, keyword: string): string => {
   
   const regex = new RegExp(`(${keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi')
   return text.replace(regex, '<mark class="bg-yellow-200 text-gray-900 font-semibold px-1 rounded">$1</mark>')
+}
+
+const truncate = (value: string, length = 80): string => {
+  if (!value) return value
+  return value.length > length ? `${value.slice(0, length)}...` : value
 }
 
 const getErrorMessage = (): string => {

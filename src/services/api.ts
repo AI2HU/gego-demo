@@ -94,6 +94,47 @@ export interface StatsResponse {
   last_updated: string
 }
 
+export interface URLMentionStats {
+  url: string
+  title?: string
+  search_query?: string
+  citations: number
+}
+
+export interface DomainMentionStats {
+  domain: string
+  citations: number
+  unique_url_count: number
+}
+
+export interface URLStatsResponse {
+  top_urls: URLMentionStats[]
+  top_domains: DomainMentionStats[]
+}
+
+export interface QueryURLItem {
+  url: string
+  title?: string
+  citations: number
+}
+
+export interface QueryURLStats {
+  query: string
+  total_citations: number
+  urls: QueryURLItem[]
+}
+
+export interface DomainCount {
+  domain: string
+  count: number
+}
+
+export interface KeywordDomainStats {
+  keyword: string
+  total: number
+  domains: DomainCount[]
+}
+
 export interface SearchRequest {
   keyword: string
   start_time?: string
@@ -203,6 +244,33 @@ class ApiService {
     const params = keywordLimit ? `?keyword_limit=${keywordLimit}` : ''
     const response = await this.request<APIResponse<StatsResponse>>(`/stats${params}`)
     return response.data!
+  }
+
+  async getURLStats(limit?: number): Promise<URLStatsResponse> {
+    const params = limit ? `?limit=${limit}` : ''
+    const response = await this.request<APIResponse<URLStatsResponse>>(`/stats/urls${params}`)
+    return response.data!
+  }
+
+  async getQueryURLStats(limit?: number): Promise<QueryURLStats[]> {
+    const params = limit ? `?limit=${limit}` : ''
+    const response = await this.request<APIResponse<QueryURLStats[]>>(`/stats/query-urls${params}`)
+    return response.data || []
+  }
+
+  async getKeywordDomainMatrix(keywordLimit?: number, domainLimit?: number): Promise<KeywordDomainStats[]> {
+    const searchParams = new URLSearchParams()
+    if (keywordLimit) {
+      searchParams.set('keyword_limit', String(keywordLimit))
+    }
+    if (domainLimit) {
+      searchParams.set('domain_limit', String(domainLimit))
+    }
+    const query = searchParams.toString()
+    const response = await this.request<APIResponse<KeywordDomainStats[]>>(
+      `/stats/keyword-domains${query ? `?${query}` : ''}`
+    )
+    return response.data || []
   }
 
   // Search endpoint
