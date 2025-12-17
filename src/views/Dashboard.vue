@@ -497,9 +497,9 @@
               </div>
             </div>
             <div class="p-6">
-              <div v-if="filteredTopUrls.length > 0" class="space-y-3">
+              <div v-if="urlStats?.top_urls && urlStats.top_urls.length > 0" class="space-y-3">
                 <div
-                  v-for="item in filteredTopUrls.slice(0, 10)"
+                  v-for="item in urlStats.top_urls.slice(0, 10)"
                   :key="item.url"
                   class="flex items-start justify-between p-3 bg-slate-50 rounded-lg border border-gray-200/50 hover:bg-slate-100 transition-colors duration-200"
                 >
@@ -512,7 +512,10 @@
                     >
                       {{ truncate(item.title || item.url, 80) }}
                     </a>
-                    <p v-if="item.search_query" class="mt-1 text-xs text-gray-500">
+                    <p
+                      v-if="item.search_query && item.search_query.trim().toLowerCase() !== 'unknown'"
+                      class="mt-1 text-xs text-gray-500"
+                    >
                       Search: "{{ truncate(item.search_query, 60) }}"
                     </p>
                   </div>
@@ -1066,17 +1069,6 @@ const domainChartData = computed(() => {
       }
     ]
   }
-})
-
-const filteredTopUrls = computed(() => {
-  if (!urlStats.value?.top_urls?.length) {
-    return []
-  }
-
-  return urlStats.value.top_urls.filter(item => {
-    if (!item.search_query) return true
-    return item.search_query.trim().toLowerCase() !== 'unknown'
-  })
 })
 
 const getPromptTemplate = (promptId: string): string => {
